@@ -1,0 +1,2 @@
+# absension_magang
+samud
