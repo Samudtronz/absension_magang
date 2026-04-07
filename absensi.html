@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Absensi Magang</title>
+    <style>
+        :root {
+            --primary-color: #4facfe;
+            --secondary-color: #00f2fe;
+            --dark-bg: #1a1a2e;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            border: 1px border rgba(255, 255, 255, 0.18);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            outline: none;
+            min-width: 200px;
+        }
+
+        input::placeholder {
+            color: #ccc;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-checkin {
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            color: white;
+        }
+
+        .btn-checkout {
+            background: linear-gradient(to right, #ff5f6d, #ffc371);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .status-in { color: #96c93d; font-weight: bold; }
+        .status-out { color: #ff5f6d; font-weight: bold; }
+
+        @media (max-width: 600px) {
+            .input-group { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>PRESENSI MAGANG</h2>
+    
+    <div class="input-group">
+        <input type="text" id="internName" placeholder="Masukkan Nama Lengkap...">
+        <button class="btn btn-checkin" onclick="addAttendance('Masuk')">Check In</button>
+        <button class="btn btn-checkout" onclick="addAttendance('Keluar')">Check Out</button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nama</th>
+                    <th>Waktu</th>
+                    <th>Status</th>
+                    <th>Tanggal</th>
+                </tr>
+            </thead>
+            <tbody id="attendanceList">
+                </tbody>
+        </table>
+    </div>
+    <button class="btn" style="margin-top: 20px; background: #444;" onclick="clearData()">Hapus Riwayat</button>
+</div>
+
+<script>
+    // Memuat data saat halaman dibuka
+    document.addEventListener('DOMContentLoaded', displayData);
+
+    function addAttendance(status) {
+        const nameInput = document.getElementById('internName');
+        const name = nameInput.value.trim();
+
+        if (name === "") {
+            alert("Harap masukkan nama terlebih dahulu!");
+            return;
+        }
+
+        const now = new Date();
+        const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        const date = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+
+        const attendanceData = {
+            name: name,
+            time: time,
+            status: status,
+            date: date
+        };
+
+        // Simpan ke LocalStorage
+        let list = JSON.parse(localStorage.getItem('absensiMagang')) || [];
+        list.push(attendanceData);
+        localStorage.setItem('absensiMagang', JSON.stringify(list));
+
+        nameInput.value = ""; // Reset input
+        displayData();
+    }
+
+    function displayData() {
+        const tableBody = document.getElementById('attendanceList');
+        const list = JSON.parse(localStorage.getItem('absensiMagang')) || [];
+        
+        tableBody.innerHTML = "";
+
+        list.reverse().forEach(item => {
+            const row = `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.time}</td>
+                    <td class="${item.status === 'Masuk' ? 'status-in' : 'status-out'}">${item.status}</td>
+                    <td>${item.date}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    function clearData() {
+        if (confirm("Hapus semua riwayat absensi?")) {
+            localStorage.removeItem('absensiMagang');
+            displayData();
+        }
+    }
+</script>
+
+</body>
+</html>
